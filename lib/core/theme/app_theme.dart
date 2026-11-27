@@ -17,6 +17,7 @@ class AppTheme {
   static const Color textPrimary = Color(0xFFFFFFFF);
   static const Color textSecondary = Color(0xFFB3BED6);
   static const Color errorColor = Color(0xFFFF6B7A);
+  static const Color warningColor = Color(0xFFFFB84D);
   static const Color successColor = Color(0xFF4CE0A8);
 
   static const LinearGradient primaryButtonGradient = LinearGradient(

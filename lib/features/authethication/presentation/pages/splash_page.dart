@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:daymark_tracking/features/authethication/presentation/cubit/auth_session_cubit.dart';
-import 'package:daymark_tracking/features/authethication/presentation/widgets/auth_widgets.dart';
+import 'package:daymark_tracking/features/authethication/presentation/widgets/auth_background.dart';
+import 'package:daymark_tracking/features/authethication/presentation/widgets/auth_logo_header.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});

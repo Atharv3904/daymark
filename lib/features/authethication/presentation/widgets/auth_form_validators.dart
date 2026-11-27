@@ -1,6 +1,6 @@
-/// Client-side input validators matching `authethications/spec.md` Section 4.
-class AuthValidators {
-  AuthValidators._();
+/// Presentation-layer UI form validators matching `authethications/spec.md` §4.
+class AuthFormValidators {
+  AuthFormValidators._();
 
   static final RegExp _emailRegex = RegExp(
     r'^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$',

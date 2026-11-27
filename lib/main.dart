@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:daymark_tracking/core/get_it/get_injection.dart';
+import 'package:daymark_tracking/core/present/widgets/global_snackbar.dart';
 import 'package:daymark_tracking/core/routes/router.dart';
 import 'package:daymark_tracking/core/theme/app_theme.dart';
 import 'package:daymark_tracking/features/authethication/presentation/cubit/auth_session_cubit.dart';
@@ -44,6 +45,7 @@ class _DayMarkAppState extends State<DayMarkApp> {
       child: MaterialApp.router(
         title: 'DayMark',
         theme: AppTheme.darkTheme,
+        scaffoldMessengerKey: GlobalSnackbar.messengerKey,
         debugShowCheckedModeBanner: false,
         routerConfig: _appRouter.router,
       ),

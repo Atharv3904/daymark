@@ -3,7 +3,10 @@ import 'package:go_router/go_router.dart';
 
 import 'package:daymark_tracking/core/routes/routes.dart';
 import 'package:daymark_tracking/core/theme/app_theme.dart';
-import 'package:daymark_tracking/features/authethication/presentation/widgets/auth_widgets.dart';
+import 'package:daymark_tracking/features/authethication/presentation/widgets/auth_background.dart';
+import 'package:daymark_tracking/features/authethication/presentation/widgets/auth_logo_header.dart';
+import 'package:daymark_tracking/features/authethication/presentation/widgets/glass_card.dart';
+import 'package:daymark_tracking/features/authethication/presentation/widgets/gradient_submit_button.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});

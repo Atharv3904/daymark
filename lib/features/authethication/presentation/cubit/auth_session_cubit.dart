@@ -1,7 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:daymark_tracking/features/authethication/domain/entity/auth_entities.dart';
-import 'package:daymark_tracking/features/authethication/domain/usecases/auth_usecases.dart';
+import 'package:daymark_tracking/features/authethication/domain/usecases/check_session_usecase.dart';
+import 'package:daymark_tracking/features/authethication/domain/usecases/sign_out_usecase.dart';
 import 'package:daymark_tracking/features/authethication/presentation/cubit/auth_session_state.dart';
 
 /// Manages global authentication session lifecycle (Splash check, authenticated,

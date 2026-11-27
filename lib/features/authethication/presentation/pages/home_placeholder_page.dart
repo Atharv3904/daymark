@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:daymark_tracking/features/authethication/presentation/cubit/auth_session_cubit.dart';
-import 'package:daymark_tracking/features/authethication/presentation/widgets/auth_widgets.dart';
+import 'package:daymark_tracking/features/authethication/presentation/widgets/auth_background.dart';
+import 'package:daymark_tracking/features/authethication/presentation/widgets/auth_logo_header.dart';
+import 'package:daymark_tracking/features/authethication/presentation/widgets/glass_card.dart';
+import 'package:daymark_tracking/features/authethication/presentation/widgets/gradient_submit_button.dart';
 
 /// Minimal protected Home & Sign-out placeholder until Dashboard/Profile
 /// features are implemented.
