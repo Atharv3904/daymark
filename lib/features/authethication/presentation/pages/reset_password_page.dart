@@ -8,12 +8,9 @@
 // - New password, confirm password, requirements checklist
 // - Bottom ambient wave background
 
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:go_router/go_router.dart';
 import 'package:daymark_tracking/core/routes/routes_name.dart';
 import 'package:daymark_tracking/core/theme/app_theme.dart';
@@ -23,41 +20,27 @@ import 'package:daymark_tracking/features/authethication/presentation/widgets/au
 import 'package:daymark_tracking/features/authethication/presentation/widgets/reset_password_form.dart';
 
 class ResetPasswordPage extends StatefulWidget {
-  const ResetPasswordPage({super.key});
+  /// Token obtained from the password-reset deep-link URL.
+  /// When non-null and non-empty the reset form is shown.
+  /// When absent an "expired / invalid link" notice is shown instead.
+  final String? resetToken;
+
+  const ResetPasswordPage({super.key, this.resetToken});
 
   @override
   State<ResetPasswordPage> createState() => _ResetPasswordPageState();
 }
 
 class _ResetPasswordPageState extends State<ResetPasswordPage> {
-  late bool _hasValidSession;
-  StreamSubscription<supabase.AuthState>? _sub;
+  late final bool _hasValidSession;
 
   @override
   void initState() {
     super.initState();
+    // TODO: When the backend contract is confirmed, consider validating the
+    // reset token against the API before showing the form.
     _hasValidSession =
-        supabase.Supabase.instance.client.auth.currentSession != null;
-    try {
-      _sub = supabase.Supabase.instance.client.auth.onAuthStateChange.listen((
-        data,
-      ) {
-        if (mounted) {
-          setState(() {
-            _hasValidSession =
-                supabase.Supabase.instance.client.auth.currentSession != null;
-          });
-        }
-      });
-    } catch (_) {
-      // Ignore if Supabase is not initialized in tests
-    }
-  }
-
-  @override
-  void dispose() {
-    _sub?.cancel();
-    super.dispose();
+        widget.resetToken != null && widget.resetToken!.isNotEmpty;
   }
 
   @override

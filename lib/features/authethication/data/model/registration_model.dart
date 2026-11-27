@@ -1,9 +1,9 @@
 // lib/features/authethication/data/model/registration_model.dart
 //
-// Data model used by the data layer to interact with Supabase for the
-// registration flow. It mirrors the fields required by Supabase (`email`
-// and `password`). The model can be constructed from a domain
-// `RegistrationEntity` and provides a `toJson` method for the Supabase SDK.
+// Data model used by the data layer to interact with the FastAPI backend
+// for the registration flow. It mirrors the fields required by the REST API
+// (`email` and `password`). The model can be constructed from a domain
+// `RegistrationEntity` and provides a `toJson` method for the API request body.
 
 import 'package:daymark_tracking/features/authethication/domain/entity/registration_entity.dart';
 
@@ -18,9 +18,7 @@ class RegistrationModel {
     return RegistrationModel(email: entity.email, password: entity.password);
   }
 
-  /// Convert the model to a map that can be passed to Supabase's `signUp`
-  /// method. The SDK expects a JSON‑like map with `email` and `password`
-  /// keys.
+  /// Convert the model to a JSON map for the REST API request body.
   Map<String, dynamic> toJson() {
     return {'email': email, 'password': password};
   }

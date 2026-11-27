@@ -15,7 +15,7 @@ import 'package:equatable/equatable.dart';
 /// * **password** – stored exactly as entered (no trimming).
 ///
 /// This entity lives in the *domain* layer, keeping it free of any framework
-/// or infrastructure concerns (e.g., no Flutter widgets, no Supabase types).
+/// or infrastructure concerns (e.g., no Flutter widgets, no SDK-specific types).
 /// {@endtemplate}
 class LoginEntity extends Equatable {
   const LoginEntity({required this.email, required this.password});

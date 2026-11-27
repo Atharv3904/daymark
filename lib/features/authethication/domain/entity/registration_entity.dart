@@ -17,7 +17,7 @@ import 'package:equatable/equatable.dart';
 ///   8 characters long.
 ///
 /// This entity lives in the *domain* layer, keeping it free of any framework
-/// or infrastructure concerns (e.g., no Flutter widgets, no Supabase types).
+/// or infrastructure concerns (e.g., no Flutter widgets, no SDK-specific types).
 /// {@endtemplate}
 class RegistrationEntity extends Equatable {
   const RegistrationEntity({required this.email, required this.password});

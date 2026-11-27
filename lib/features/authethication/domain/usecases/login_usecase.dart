@@ -14,7 +14,7 @@ import 'package:daymark_tracking/features/authethication/domain/repository/auth_
 ///
 /// - Email is trimmed in the presentation layer.
 /// - Password is preserved exactly as entered.
-/// - Calls the repository which talks to Supabase via the data source.
+/// - Calls the repository which talks to the FastAPI backend via the data source.
 /// - Returns `Right(void)` on success or `Left(AppFailure)` on error.
 /// {@endtemplate}
 class LoginUseCase {

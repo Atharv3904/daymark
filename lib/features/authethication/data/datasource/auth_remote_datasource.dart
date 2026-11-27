@@ -1,31 +1,39 @@
 // lib/features/authethication/data/datasource/auth_remote_datasource.dart
 //
 // Abstract contract for the unified authentication remote data source.
-// All authentication operations (sign-up, sign-in, forgot-password, reset-password)
-// are defined here. Keeping a single data-source allows the repository
-// implementation to be unit-tested by mocking one dependency.
+// All authentication operations (register, login, forgot-password,
+// reset-password, sign-out) are defined here. Keeping a single data-source
+// allows the repository implementation to be unit-tested by mocking one
+// dependency.
 
-import 'package:supabase_flutter/supabase_flutter.dart';
-
+/// Contract for authentication REST API calls.
+///
+/// Methods accept domain-level parameters and return parsed response data.
+/// The concrete implementation communicates with the FastAPI backend
+/// exclusively through REST API calls via [DioClient].
 abstract class AuthRemoteDataSource {
-  /// Calls Supabase's `signUp` endpoint.
-  Future<AuthResponse> signUp({
+  /// Register a new user. Returns the parsed response body.
+  Future<Map<String, dynamic>> register({
     required String email,
     required String password,
   });
 
-  /// Calls Supabase's `signInWithPassword` endpoint.
-  Future<AuthResponse> signIn({
+  /// Authenticate a user. Returns the parsed response body
+  /// (expected to contain access / refresh tokens).
+  Future<Map<String, dynamic>> login({
     required String email,
     required String password,
   });
 
-  /// Sends a password reset email via Supabase's `resetPasswordForEmail` endpoint.
-  Future<void> sendPasswordResetEmail({
-    required String email,
-    String? redirectTo,
+  /// Request a password-reset email for the given address.
+  Future<void> sendPasswordResetEmail({required String email});
+
+  /// Set a new password using a reset token obtained from the reset email.
+  Future<void> resetPassword({
+    required String newPassword,
+    required String token,
   });
 
-  /// Updates the user's password using an authenticated recovery session.
-  Future<UserResponse> updatePassword({required String newPassword});
+  /// Sign the current user out and invalidate their session.
+  Future<void> signOut();
 }

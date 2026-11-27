@@ -1,48 +1,97 @@
 // lib/features/authethication/data/datasource/auth_remote_datasource_impl.dart
 //
 // Concrete implementation of the unified authentication remote data source.
-// All Supabase auth API calls are centralised here.
+// All FastAPI REST API calls for authentication are centralised here.
 
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:dio/dio.dart';
+import 'package:daymark_tracking/core/network/dio_client.dart';
 
 import 'auth_remote_datasource.dart';
 
+/// REST implementation of [AuthRemoteDataSource].
+///
+/// Communicates with the FastAPI backend via [DioClient].
+/// [DioException] errors are mapped to typed [AppException] by
+/// [DioClient.mapDioException] and rethrown for the repository to handle.
+///
+/// TODO: Update endpoint paths when FastAPI API documentation is available.
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
-  final SupabaseClient _supabase;
+  final DioClient _client;
 
-  AuthRemoteDataSourceImpl(this._supabase);
+  AuthRemoteDataSourceImpl(this._client);
+
+  // TODO: Confirm endpoint paths with FastAPI backend documentation.
+  static const String _registerPath = '/api/v1/auth/register';
+  static const String _loginPath = '/api/v1/auth/login';
+  static const String _forgotPasswordPath = '/api/v1/auth/forgot-password';
+  static const String _resetPasswordPath = '/api/v1/auth/reset-password';
+  static const String _signOutPath = '/api/v1/auth/sign-out';
 
   @override
-  Future<AuthResponse> signUp({
+  Future<Map<String, dynamic>> register({
     required String email,
     required String password,
   }) async {
-    return await _supabase.auth.signUp(email: email, password: password);
+    try {
+      final Response<dynamic> response = await _client.dio.post(
+        _registerPath,
+        data: <String, dynamic>{'email': email, 'password': password},
+      );
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw DioClient.mapDioException(e);
+    }
   }
 
   @override
-  Future<AuthResponse> signIn({
+  Future<Map<String, dynamic>> login({
     required String email,
     required String password,
   }) async {
-    return await _supabase.auth.signInWithPassword(
-      email: email,
-      password: password,
-    );
+    try {
+      final Response<dynamic> response = await _client.dio.post(
+        _loginPath,
+        data: <String, dynamic>{'email': email, 'password': password},
+      );
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw DioClient.mapDioException(e);
+    }
   }
 
   @override
-  Future<void> sendPasswordResetEmail({
-    required String email,
-    String? redirectTo,
+  Future<void> sendPasswordResetEmail({required String email}) async {
+    try {
+      await _client.dio.post(
+        _forgotPasswordPath,
+        data: <String, dynamic>{'email': email},
+      );
+    } on DioException catch (e) {
+      throw DioClient.mapDioException(e);
+    }
+  }
+
+  @override
+  Future<void> resetPassword({
+    required String newPassword,
+    required String token,
   }) async {
-    await _supabase.auth.resetPasswordForEmail(email, redirectTo: redirectTo);
+    try {
+      await _client.dio.post(
+        _resetPasswordPath,
+        data: <String, dynamic>{'new_password': newPassword, 'token': token},
+      );
+    } on DioException catch (e) {
+      throw DioClient.mapDioException(e);
+    }
   }
 
   @override
-  Future<UserResponse> updatePassword({required String newPassword}) async {
-    return await _supabase.auth.updateUser(
-      UserAttributes(password: newPassword),
-    );
+  Future<void> signOut() async {
+    try {
+      await _client.dio.post(_signOutPath);
+    } on DioException catch (e) {
+      throw DioClient.mapDioException(e);
+    }
   }
 }

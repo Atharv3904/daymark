@@ -1,85 +1,55 @@
 // lib/core/routes/router.dart
 //
-// Sets up GoRouter for the DayMark app, including authentication routes
-// (sign-up, login, forgot-password, reset-password).
-// Handles deep link callbacks for password recovery as a singleton.
+// Application router using GoRouter.
+// Defines authentication routes for the DayMark app.
 
-import 'dart:async';
-
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:daymark_tracking/features/authethication/presentation/pages/registration_page.dart';
-import 'package:daymark_tracking/features/authethication/presentation/pages/login_page.dart';
+
+import 'package:daymark_tracking/core/routes/routes_name.dart';
 import 'package:daymark_tracking/features/authethication/presentation/pages/forgot_password_page.dart';
+import 'package:daymark_tracking/features/authethication/presentation/pages/login_page.dart';
+import 'package:daymark_tracking/features/authethication/presentation/pages/registration_page.dart';
 import 'package:daymark_tracking/features/authethication/presentation/pages/reset_password_page.dart';
 
-import 'routes_name.dart';
-
+/// Central application router.
+///
+/// Provides a [GoRouter] with authentication routes. Additional feature routes
+/// (dashboard, tasks, etc.) should be added here as they become available.
 class AppRouter {
-  static final AppRouter _instance = AppRouter._internal();
-  factory AppRouter() => _instance;
-
-  late final GoRouter _router;
-  StreamSubscription<AuthState>? _authSubscription;
-
-  AppRouter._internal() {
-    _router = GoRouter(
-      initialLocation: Routes.login,
-      routes: [
-        // Login page
-        GoRoute(
-          path: Routes.login,
-          name: 'login',
-          builder: (context, state) => const LoginPage(),
-        ),
-        // Sign-up (registration) page
-        GoRoute(
-          path: Routes.signup,
-          name: 'signup',
-          builder: (context, state) => const RegistrationPage(),
-        ),
-        // Forgot password page
-        GoRoute(
-          path: Routes.forgotPassword,
-          name: 'forgot-password',
-          builder: (context, state) => const ForgotPasswordPage(),
-        ),
-        // Password reset page (public deep link callback)
-        GoRoute(
-          path: Routes.resetPassword,
-          name: 'reset-password',
-          builder: (context, state) => const ResetPasswordPage(),
-        ),
-      ],
-    );
-
-    _listenToAuthChanges();
-  }
-
-  void _listenToAuthChanges() {
-    try {
-      _authSubscription = Supabase.instance.client.auth.onAuthStateChange
-          .listen(
-            (data) {
-              final AuthChangeEvent event = data.event;
-              if (event == AuthChangeEvent.passwordRecovery) {
-                // User opened password recovery deep link
-                _router.go(Routes.resetPassword);
-              }
-            },
-            onError: (error) {
-              debugPrint('Auth state change listener error: $error');
-            },
-          );
-    } catch (e) {
-      debugPrint('Supabase not yet initialized or subscription error: $e');
-    }
-  }
-
-  void dispose() {
-    _authSubscription?.cancel();
-  }
-
+  /// The configured [GoRouter] instance for use in [MaterialApp.router].
   GoRouter get router => _router;
+
+  final GoRouter _router = GoRouter(
+    initialLocation: Routes.login,
+    routes: <RouteBase>[
+      GoRoute(
+        path: Routes.login,
+        builder: (BuildContext context, GoRouterState state) {
+          return const LoginPage();
+        },
+      ),
+      GoRoute(
+        path: Routes.signup,
+        builder: (BuildContext context, GoRouterState state) {
+          return const RegistrationPage();
+        },
+      ),
+      GoRoute(
+        path: Routes.forgotPassword,
+        builder: (BuildContext context, GoRouterState state) {
+          return const ForgotPasswordPage();
+        },
+      ),
+      GoRoute(
+        path: Routes.resetPassword,
+        builder: (BuildContext context, GoRouterState state) {
+          // The reset token is expected as a query parameter from the
+          // deep-link URL, e.g. /reset-password?token=abc123
+          final String? token = state.uri.queryParameters['token'];
+          return ResetPasswordPage(resetToken: token);
+        },
+      ),
+    ],
+  );
 }

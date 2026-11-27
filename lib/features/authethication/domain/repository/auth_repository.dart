@@ -2,7 +2,7 @@
 //
 // Unified abstract contract for all authentication data operations.
 // The domain depends only on this abstraction, never on concrete
-// implementations or external SDKs (Supabase, HTTP, etc.).
+// implementations or external SDKs.
 
 import 'package:dartz/dartz.dart';
 import 'package:daymark_tracking/core/errors/failures/app_failure.dart';

@@ -1,8 +1,12 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:daymark_tracking/core/config/api_config.dart';
+import 'package:daymark_tracking/core/network/dio_client.dart';
+import 'package:daymark_tracking/core/storage/token_storage.dart';
 import 'package:daymark_tracking/features/authethication/data/datasource/auth_remote_datasource.dart';
 import 'package:daymark_tracking/features/authethication/data/datasource/auth_remote_datasource_impl.dart';
+
 import 'package:daymark_tracking/features/authethication/data/repository/auth_repository_impl.dart';
 import 'package:daymark_tracking/features/authethication/domain/repository/auth_repository.dart';
 import 'package:daymark_tracking/features/authethication/domain/usecases/registration_usecase.dart';
@@ -14,20 +18,35 @@ import 'package:daymark_tracking/features/authethication/presentation/cubit/auth
 final GetIt getIt = GetIt.instance;
 
 void setupInjection() {
-  if (getIt.isRegistered<SupabaseClient>()) {
-    return;
-  }
+  // ---------------------------------------------------------------------------
+  // Core Infrastructure & Configuration
+  // ---------------------------------------------------------------------------
+  getIt.registerLazySingleton<ApiConfig>(() => ApiConfig.fromEnvironment());
 
-  // ---------------------------------------------------------------------------
-  // External
-  // ---------------------------------------------------------------------------
-  getIt.registerLazySingleton<SupabaseClient>(() => Supabase.instance.client);
+  getIt.registerLazySingleton<FlutterSecureStorage>(
+    () => const FlutterSecureStorage(
+      aOptions: AndroidOptions(encryptedSharedPreferences: true),
+      iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+    ),
+  );
+
+  getIt.registerLazySingleton<TokenStorage>(
+    () => SecureTokenStorageImpl(getIt<FlutterSecureStorage>()),
+  );
+
+  getIt.registerLazySingleton<DioClient>(
+    () => DioClient(
+      config: getIt<ApiConfig>(),
+      tokenStorage: getIt<TokenStorage>(),
+      attachToken: false, // Activated when auth contract is confirmed
+    ),
+  );
 
   // ---------------------------------------------------------------------------
   // Authentication — Data Source
   // ---------------------------------------------------------------------------
   getIt.registerLazySingleton<AuthRemoteDataSource>(
-    () => AuthRemoteDataSourceImpl(getIt<SupabaseClient>()),
+    () => AuthRemoteDataSourceImpl(getIt<DioClient>()),
   );
 
   // ---------------------------------------------------------------------------
@@ -36,7 +55,7 @@ void setupInjection() {
   getIt.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(
       getIt<AuthRemoteDataSource>(),
-      getIt<SupabaseClient>(),
+      getIt<TokenStorage>(),
     ),
   );
 
