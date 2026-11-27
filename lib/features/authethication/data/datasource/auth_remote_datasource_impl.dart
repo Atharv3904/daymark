@@ -3,7 +3,12 @@ import 'package:dio/dio.dart';
 import 'package:daymark_tracking/core/errors/exceptions/app_exception.dart';
 import 'package:daymark_tracking/core/network/dio_client.dart';
 import 'package:daymark_tracking/features/authethication/data/datasource/auth_remote_datasource.dart';
-import 'package:daymark_tracking/features/authethication/data/model/auth_models.dart';
+import 'package:daymark_tracking/features/authethication/data/model/auth_session_model.dart';
+import 'package:daymark_tracking/features/authethication/data/model/forgot_password_request_model.dart';
+import 'package:daymark_tracking/features/authethication/data/model/login_request_model.dart';
+import 'package:daymark_tracking/features/authethication/data/model/registration_request_model.dart';
+import 'package:daymark_tracking/features/authethication/data/model/reset_password_request_model.dart';
+import 'package:daymark_tracking/features/authethication/data/model/verify_email_request_model.dart';
 
 /// Contract-ready REST implementation of [AuthRemoteDataSource].
 ///

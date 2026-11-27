@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import 'package:daymark_tracking/core/errors/failures/app_failure.dart';
-import 'package:daymark_tracking/features/authethication/domain/entity/auth_entities.dart';
+import 'package:daymark_tracking/features/authethication/domain/entity/auth_session_entity.dart';
 
 abstract class AuthFormState extends Equatable {
   const AuthFormState();

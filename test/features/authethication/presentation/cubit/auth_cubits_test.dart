@@ -2,7 +2,8 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:daymark_tracking/core/errors/failures/app_failure.dart';
-import 'package:daymark_tracking/features/authethication/domain/entity/auth_entities.dart';
+import 'package:daymark_tracking/features/authethication/domain/entity/auth_session_entity.dart';
+import 'package:daymark_tracking/features/authethication/domain/params/auth_params.dart';
 import 'package:daymark_tracking/features/authethication/domain/repository/auth_repository.dart';
 import 'package:daymark_tracking/features/authethication/domain/usecases/check_session_usecase.dart';
 import 'package:daymark_tracking/features/authethication/domain/usecases/forgot_password_usecase.dart';
@@ -25,27 +26,27 @@ class _FakeAuthRepository implements AuthRepository {
 
   @override
   Future<Either<AppFailure, AuthSessionEntity>> register(
-    RegistrationEntity entity,
+    RegisterParams params,
   ) async => failure != null ? Left(failure!) : Right(session);
 
   @override
   Future<Either<AppFailure, AuthSessionEntity>> login(
-    LoginEntity entity,
+    LoginParams params,
   ) async => failure != null ? Left(failure!) : Right(session);
 
   @override
   Future<Either<AppFailure, void>> sendPasswordResetEmail(
-    ForgotPasswordEntity entity,
+    ForgotPasswordParams params,
   ) async => failure != null ? Left(failure!) : const Right(null);
 
   @override
   Future<Either<AppFailure, void>> resetPassword(
-    ResetPasswordEntity entity,
+    ResetPasswordParams params,
   ) async => failure != null ? Left(failure!) : const Right(null);
 
   @override
   Future<Either<AppFailure, AuthSessionEntity>> verifyEmail(
-    VerifyEmailEntity entity,
+    VerifyEmailParams params,
   ) async => failure != null ? Left(failure!) : Right(session);
 
   @override
@@ -94,13 +95,13 @@ void main() {
 
   test('AuthFormCubit emits LoginSuccess and Error cleanly', () async {
     await formCubit.login(
-      const LoginEntity(email: 'a@b.com', password: 'password123'),
+      const LoginParams(email: 'a@b.com', password: 'password123'),
     );
     expect(formCubit.state, isA<AuthFormLoginSuccess>());
 
     repository.failure = const InvalidCredentialsFailure();
     await formCubit.login(
-      const LoginEntity(email: 'a@b.com', password: 'wrongpassword'),
+      const LoginParams(email: 'a@b.com', password: 'wrongpassword'),
     );
     expect(formCubit.state, const AuthFormError(InvalidCredentialsFailure()));
   });

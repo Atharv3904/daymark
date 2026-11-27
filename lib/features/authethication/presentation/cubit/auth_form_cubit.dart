@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:daymark_tracking/features/authethication/domain/entity/auth_entities.dart';
+import 'package:daymark_tracking/features/authethication/domain/params/auth_params.dart';
 import 'package:daymark_tracking/features/authethication/domain/usecases/forgot_password_usecase.dart';
 import 'package:daymark_tracking/features/authethication/domain/usecases/login_usecase.dart';
 import 'package:daymark_tracking/features/authethication/domain/usecases/register_usecase.dart';
@@ -25,50 +25,50 @@ class AuthFormCubit extends Cubit<AuthFormState> {
     this._verifyEmailUseCase,
   ) : super(const AuthFormInitial());
 
-  Future<void> register(RegistrationEntity entity) async {
+  Future<void> register(RegisterParams params) async {
     if (state is AuthFormLoading) return;
     emit(const AuthFormLoading());
-    final result = await _registerUseCase.execute(entity);
+    final result = await _registerUseCase.execute(params);
     result.fold(
       (failure) => emit(AuthFormError(failure)),
       (session) => emit(AuthFormRegistrationSuccess(session)),
     );
   }
 
-  Future<void> login(LoginEntity entity) async {
+  Future<void> login(LoginParams params) async {
     if (state is AuthFormLoading) return;
     emit(const AuthFormLoading());
-    final result = await _loginUseCase.execute(entity);
+    final result = await _loginUseCase.execute(params);
     result.fold(
       (failure) => emit(AuthFormError(failure)),
       (session) => emit(AuthFormLoginSuccess(session)),
     );
   }
 
-  Future<void> sendPasswordResetEmail(ForgotPasswordEntity entity) async {
+  Future<void> sendPasswordResetEmail(ForgotPasswordParams params) async {
     if (state is AuthFormLoading) return;
     emit(const AuthFormLoading());
-    final result = await _forgotPasswordUseCase.execute(entity);
+    final result = await _forgotPasswordUseCase.execute(params);
     result.fold(
       (failure) => emit(AuthFormError(failure)),
       (_) => emit(const AuthFormForgotPasswordSuccess()),
     );
   }
 
-  Future<void> resetPassword(ResetPasswordEntity entity) async {
+  Future<void> resetPassword(ResetPasswordParams params) async {
     if (state is AuthFormLoading) return;
     emit(const AuthFormLoading());
-    final result = await _resetPasswordUseCase.execute(entity);
+    final result = await _resetPasswordUseCase.execute(params);
     result.fold(
       (failure) => emit(AuthFormError(failure)),
       (_) => emit(const AuthFormResetPasswordSuccess()),
     );
   }
 
-  Future<void> verifyEmail(VerifyEmailEntity entity) async {
+  Future<void> verifyEmail(VerifyEmailParams params) async {
     if (state is AuthFormLoading) return;
     emit(const AuthFormLoading());
-    final result = await _verifyEmailUseCase.execute(entity);
+    final result = await _verifyEmailUseCase.execute(params);
     result.fold(
       (failure) => emit(AuthFormError(failure)),
       (session) => emit(AuthFormEmailVerified(session)),

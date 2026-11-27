@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:daymark_tracking/core/get_it/get_injection.dart';
 import 'package:daymark_tracking/core/routes/routes.dart';
 import 'package:daymark_tracking/core/theme/app_theme.dart';
-import 'package:daymark_tracking/features/authethication/domain/entity/auth_entities.dart';
+import 'package:daymark_tracking/features/authethication/domain/params/auth_params.dart';
 import 'package:daymark_tracking/features/authethication/presentation/cubit/auth_form_cubit.dart';
 import 'package:daymark_tracking/features/authethication/presentation/cubit/auth_form_state.dart';
 import 'package:daymark_tracking/features/authethication/presentation/cubit/auth_session_cubit.dart';
@@ -34,7 +34,7 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
     if (token != null && token.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          _formCubit.verifyEmail(VerifyEmailEntity(token: token));
+          _formCubit.verifyEmail(VerifyEmailParams(token: token));
         }
       });
     }

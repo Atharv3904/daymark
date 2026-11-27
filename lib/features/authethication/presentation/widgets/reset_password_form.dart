@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:daymark_tracking/core/present/widgets/global_snackbar.dart';
 import 'package:daymark_tracking/core/routes/routes.dart';
 import 'package:daymark_tracking/core/theme/app_theme.dart';
-import 'package:daymark_tracking/features/authethication/domain/entity/auth_entities.dart';
+import 'package:daymark_tracking/features/authethication/domain/params/auth_params.dart';
 import 'package:daymark_tracking/features/authethication/presentation/cubit/auth_form_cubit.dart';
 import 'package:daymark_tracking/features/authethication/presentation/cubit/auth_form_state.dart';
 import 'package:daymark_tracking/features/authethication/presentation/widgets/auth_form_validators.dart';
@@ -39,7 +39,7 @@ class _ResetPasswordFormState extends State<ResetPasswordForm> {
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     context.read<AuthFormCubit>().resetPassword(
-      ResetPasswordEntity(
+      ResetPasswordParams(
         token: widget.token,
         newPassword: _passwordController.text,
       ),

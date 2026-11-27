@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:daymark_tracking/core/present/widgets/global_snackbar.dart';
 import 'package:daymark_tracking/core/routes/routes.dart';
 import 'package:daymark_tracking/core/theme/app_theme.dart';
-import 'package:daymark_tracking/features/authethication/domain/entity/auth_entities.dart';
+import 'package:daymark_tracking/features/authethication/domain/params/auth_params.dart';
 import 'package:daymark_tracking/features/authethication/presentation/cubit/auth_form_cubit.dart';
 import 'package:daymark_tracking/features/authethication/presentation/cubit/auth_form_state.dart';
 import 'package:daymark_tracking/features/authethication/presentation/cubit/auth_session_cubit.dart';
@@ -37,7 +37,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     context.read<AuthFormCubit>().register(
-      RegistrationEntity(
+      RegisterParams(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       ),

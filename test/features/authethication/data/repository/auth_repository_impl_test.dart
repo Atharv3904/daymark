@@ -5,9 +5,15 @@ import 'package:daymark_tracking/core/errors/exceptions/app_exception.dart';
 import 'package:daymark_tracking/core/errors/failures/app_failure.dart';
 import 'package:daymark_tracking/core/storage/token_storage.dart';
 import 'package:daymark_tracking/features/authethication/data/datasource/auth_remote_datasource.dart';
-import 'package:daymark_tracking/features/authethication/data/model/auth_models.dart';
+import 'package:daymark_tracking/features/authethication/data/model/auth_session_model.dart';
+import 'package:daymark_tracking/features/authethication/data/model/forgot_password_request_model.dart';
+import 'package:daymark_tracking/features/authethication/data/model/login_request_model.dart';
+import 'package:daymark_tracking/features/authethication/data/model/registration_request_model.dart';
+import 'package:daymark_tracking/features/authethication/data/model/reset_password_request_model.dart';
+import 'package:daymark_tracking/features/authethication/data/model/verify_email_request_model.dart';
 import 'package:daymark_tracking/features/authethication/data/repository/auth_repository_impl.dart';
-import 'package:daymark_tracking/features/authethication/domain/entity/auth_entities.dart';
+import 'package:daymark_tracking/features/authethication/domain/entity/auth_session_entity.dart';
+import 'package:daymark_tracking/features/authethication/domain/params/auth_params.dart';
 
 class _FakeAuthRemoteDataSource implements AuthRemoteDataSource {
   AppException? errorToThrow;
@@ -92,7 +98,7 @@ void main() {
 
   test('login persists tokens and returns authenticated session', () async {
     final Either<AppFailure, AuthSessionEntity> result = await repository.login(
-      const LoginEntity(email: 'a@b.com', password: 'password123'),
+      const LoginParams(email: 'a@b.com', password: 'password123'),
     );
 
     expect(result.isRight(), isTrue);
@@ -107,7 +113,7 @@ void main() {
 
       final Either<AppFailure, AuthSessionEntity> result = await repository
           .register(
-            const RegistrationEntity(email: 'a@b.com', password: 'password123'),
+            const RegisterParams(email: 'a@b.com', password: 'password123'),
           );
 
       expect(result, isA<Left<AppFailure, AuthSessionEntity>>());

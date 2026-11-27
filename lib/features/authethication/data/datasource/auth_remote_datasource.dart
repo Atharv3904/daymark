@@ -1,4 +1,9 @@
-import 'package:daymark_tracking/features/authethication/data/model/auth_models.dart';
+import 'package:daymark_tracking/features/authethication/data/model/auth_session_model.dart';
+import 'package:daymark_tracking/features/authethication/data/model/forgot_password_request_model.dart';
+import 'package:daymark_tracking/features/authethication/data/model/login_request_model.dart';
+import 'package:daymark_tracking/features/authethication/data/model/registration_request_model.dart';
+import 'package:daymark_tracking/features/authethication/data/model/reset_password_request_model.dart';
+import 'package:daymark_tracking/features/authethication/data/model/verify_email_request_model.dart';
 
 /// Abstract contract for authentication REST API calls.
 abstract class AuthRemoteDataSource {

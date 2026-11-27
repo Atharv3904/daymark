@@ -4,8 +4,14 @@ import 'package:daymark_tracking/core/errors/exceptions/app_exception.dart';
 import 'package:daymark_tracking/core/errors/failures/app_failure.dart';
 import 'package:daymark_tracking/core/storage/token_storage.dart';
 import 'package:daymark_tracking/features/authethication/data/datasource/auth_remote_datasource.dart';
-import 'package:daymark_tracking/features/authethication/data/model/auth_models.dart';
-import 'package:daymark_tracking/features/authethication/domain/entity/auth_entities.dart';
+import 'package:daymark_tracking/features/authethication/data/model/auth_session_model.dart';
+import 'package:daymark_tracking/features/authethication/data/model/forgot_password_request_model.dart';
+import 'package:daymark_tracking/features/authethication/data/model/login_request_model.dart';
+import 'package:daymark_tracking/features/authethication/data/model/registration_request_model.dart';
+import 'package:daymark_tracking/features/authethication/data/model/reset_password_request_model.dart';
+import 'package:daymark_tracking/features/authethication/data/model/verify_email_request_model.dart';
+import 'package:daymark_tracking/features/authethication/domain/entity/auth_session_entity.dart';
+import 'package:daymark_tracking/features/authethication/domain/params/auth_params.dart';
 import 'package:daymark_tracking/features/authethication/domain/repository/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
@@ -16,11 +22,11 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<AppFailure, AuthSessionEntity>> register(
-    RegistrationEntity entity,
+    RegisterParams params,
   ) async {
     try {
       final AuthSessionModel result = await _dataSource.register(
-        RegistrationRequestModel.fromEntity(entity),
+        RegistrationRequestModel.fromParams(params),
       );
       await _persistTokensIfPresent(result);
       // TODO: Trigger Profile initialization per `profile/spec.md` once
@@ -35,11 +41,11 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<AppFailure, AuthSessionEntity>> login(
-    LoginEntity entity,
+    LoginParams params,
   ) async {
     try {
       final AuthSessionModel result = await _dataSource.login(
-        LoginRequestModel.fromEntity(entity),
+        LoginRequestModel.fromParams(params),
       );
       await _persistTokensIfPresent(result);
       return Right(result.toEntity());
@@ -52,11 +58,11 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<AppFailure, void>> sendPasswordResetEmail(
-    ForgotPasswordEntity entity,
+    ForgotPasswordParams params,
   ) async {
     try {
       await _dataSource.sendPasswordResetEmail(
-        ForgotPasswordRequestModel.fromEntity(entity),
+        ForgotPasswordRequestModel.fromParams(params),
       );
       return const Right(null);
     } on AppException catch (e) {
@@ -68,11 +74,11 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<AppFailure, void>> resetPassword(
-    ResetPasswordEntity entity,
+    ResetPasswordParams params,
   ) async {
     try {
       await _dataSource.resetPassword(
-        ResetPasswordRequestModel.fromEntity(entity),
+        ResetPasswordRequestModel.fromParams(params),
       );
       return const Right(null);
     } on AppException catch (e) {
@@ -89,11 +95,11 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<AppFailure, AuthSessionEntity>> verifyEmail(
-    VerifyEmailEntity entity,
+    VerifyEmailParams params,
   ) async {
     try {
       final AuthSessionModel result = await _dataSource.verifyEmail(
-        VerifyEmailRequestModel.fromEntity(entity),
+        VerifyEmailRequestModel.fromParams(params),
       );
       await _persistTokensIfPresent(result);
       return Right(result.toEntity());

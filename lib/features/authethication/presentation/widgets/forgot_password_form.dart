@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:daymark_tracking/core/routes/routes.dart';
 import 'package:daymark_tracking/core/theme/app_theme.dart';
-import 'package:daymark_tracking/features/authethication/domain/entity/auth_entities.dart';
+import 'package:daymark_tracking/features/authethication/domain/params/auth_params.dart';
 import 'package:daymark_tracking/features/authethication/presentation/cubit/auth_form_cubit.dart';
 import 'package:daymark_tracking/features/authethication/presentation/cubit/auth_form_state.dart';
 import 'package:daymark_tracking/features/authethication/presentation/widgets/auth_form_validators.dart';
@@ -32,7 +32,7 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     context.read<AuthFormCubit>().sendPasswordResetEmail(
-      ForgotPasswordEntity(email: _emailController.text.trim()),
+      ForgotPasswordParams(email: _emailController.text.trim()),
     );
   }
 

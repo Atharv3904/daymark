@@ -6,7 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:daymark_tracking/core/errors/failures/app_failure.dart';
 import 'package:daymark_tracking/core/get_it/get_injection.dart';
 import 'package:daymark_tracking/core/theme/app_theme.dart';
-import 'package:daymark_tracking/features/authethication/domain/entity/auth_entities.dart';
+import 'package:daymark_tracking/features/authethication/domain/entity/auth_session_entity.dart';
+import 'package:daymark_tracking/features/authethication/domain/params/auth_params.dart';
 import 'package:daymark_tracking/features/authethication/domain/repository/auth_repository.dart';
 import 'package:daymark_tracking/features/authethication/domain/usecases/check_session_usecase.dart';
 import 'package:daymark_tracking/features/authethication/domain/usecases/forgot_password_usecase.dart';
@@ -28,25 +29,25 @@ class _StubAuthRepo implements AuthRepository {
       );
 
   @override
-  Future<Either<AppFailure, AuthSessionEntity>> login(LoginEntity e) async =>
+  Future<Either<AppFailure, AuthSessionEntity>> login(LoginParams p) async =>
       const Right(
         AuthSessionEntity(isAuthenticated: true, isEmailVerified: true),
       );
 
   @override
   Future<Either<AppFailure, AuthSessionEntity>> register(
-    RegistrationEntity e,
+    RegisterParams p,
   ) async => const Right(
     AuthSessionEntity(isAuthenticated: true, isEmailVerified: true),
   );
 
   @override
-  Future<Either<AppFailure, void>> resetPassword(ResetPasswordEntity e) async =>
+  Future<Either<AppFailure, void>> resetPassword(ResetPasswordParams p) async =>
       const Right(null);
 
   @override
   Future<Either<AppFailure, void>> sendPasswordResetEmail(
-    ForgotPasswordEntity e,
+    ForgotPasswordParams p,
   ) async => const Right(null);
 
   @override
@@ -55,7 +56,7 @@ class _StubAuthRepo implements AuthRepository {
 
   @override
   Future<Either<AppFailure, AuthSessionEntity>> verifyEmail(
-    VerifyEmailEntity e,
+    VerifyEmailParams p,
   ) async => const Right(
     AuthSessionEntity(isAuthenticated: true, isEmailVerified: true),
   );
