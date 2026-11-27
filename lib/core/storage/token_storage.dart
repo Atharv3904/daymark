@@ -1,9 +1,6 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-/// Abstract contract for secure token and session storage.
-///
-/// Feature and infrastructure layers depend on this abstraction rather than
-/// accessing platform-specific storage APIs directly.
+/// Abstract contract for encrypted credential/session persistence.
 abstract class TokenStorage {
   Future<void> saveTokens({required String accessToken, String? refreshToken});
   Future<String?> getAccessToken();
@@ -11,9 +8,7 @@ abstract class TokenStorage {
   Future<void> clearTokens();
 }
 
-/// Concrete implementation of [TokenStorage] backed by [FlutterSecureStorage].
-///
-/// Stores encrypted credentials in the Android Keystore and iOS Keychain.
+/// Concrete [TokenStorage] backed by [FlutterSecureStorage].
 class SecureTokenStorageImpl implements TokenStorage {
   final FlutterSecureStorage _storage;
 
@@ -21,14 +16,20 @@ class SecureTokenStorageImpl implements TokenStorage {
   static const String _refreshTokenKey = 'daymark_refresh_token';
 
   SecureTokenStorageImpl([FlutterSecureStorage? storage])
-      : _storage = storage ??
-            const FlutterSecureStorage(
-              aOptions: AndroidOptions(encryptedSharedPreferences: true),
-              iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
-            );
+    : _storage =
+          storage ??
+          const FlutterSecureStorage(
+            aOptions: AndroidOptions(encryptedSharedPreferences: true),
+            iOptions: IOSOptions(
+              accessibility: KeychainAccessibility.first_unlock,
+            ),
+          );
 
   @override
-  Future<void> saveTokens({required String accessToken, String? refreshToken}) async {
+  Future<void> saveTokens({
+    required String accessToken,
+    String? refreshToken,
+  }) async {
     await _storage.write(key: _accessTokenKey, value: accessToken);
     if (refreshToken != null) {
       await _storage.write(key: _refreshTokenKey, value: refreshToken);
@@ -36,14 +37,10 @@ class SecureTokenStorageImpl implements TokenStorage {
   }
 
   @override
-  Future<String?> getAccessToken() async {
-    return await _storage.read(key: _accessTokenKey);
-  }
+  Future<String?> getAccessToken() => _storage.read(key: _accessTokenKey);
 
   @override
-  Future<String?> getRefreshToken() async {
-    return await _storage.read(key: _refreshTokenKey);
-  }
+  Future<String?> getRefreshToken() => _storage.read(key: _refreshTokenKey);
 
   @override
   Future<void> clearTokens() async {

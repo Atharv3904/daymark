@@ -6,21 +6,16 @@ import 'package:daymark_tracking/core/network/dio_client.dart';
 import 'package:daymark_tracking/core/storage/token_storage.dart';
 import 'package:daymark_tracking/features/authethication/data/datasource/auth_remote_datasource.dart';
 import 'package:daymark_tracking/features/authethication/data/datasource/auth_remote_datasource_impl.dart';
-
 import 'package:daymark_tracking/features/authethication/data/repository/auth_repository_impl.dart';
 import 'package:daymark_tracking/features/authethication/domain/repository/auth_repository.dart';
-import 'package:daymark_tracking/features/authethication/domain/usecases/registration_usecase.dart';
-import 'package:daymark_tracking/features/authethication/domain/usecases/login_usecase.dart';
-import 'package:daymark_tracking/features/authethication/domain/usecases/forgot_password_usecase.dart';
-import 'package:daymark_tracking/features/authethication/domain/usecases/reset_password_usecase.dart';
-import 'package:daymark_tracking/features/authethication/presentation/cubit/auth_cubit.dart';
+import 'package:daymark_tracking/features/authethication/domain/usecases/auth_usecases.dart';
+import 'package:daymark_tracking/features/authethication/presentation/cubit/auth_form_cubit.dart';
+import 'package:daymark_tracking/features/authethication/presentation/cubit/auth_session_cubit.dart';
 
 final GetIt getIt = GetIt.instance;
 
 void setupInjection() {
-  // ---------------------------------------------------------------------------
-  // Core Infrastructure & Configuration
-  // ---------------------------------------------------------------------------
+  // Core
   getIt.registerLazySingleton<ApiConfig>(() => ApiConfig.fromEnvironment());
 
   getIt.registerLazySingleton<FlutterSecureStorage>(
@@ -38,20 +33,15 @@ void setupInjection() {
     () => DioClient(
       config: getIt<ApiConfig>(),
       tokenStorage: getIt<TokenStorage>(),
-      attachToken: false, // Activated when auth contract is confirmed
+      attachToken: false, // Activated when FastAPI token contract is confirmed
     ),
   );
 
-  // ---------------------------------------------------------------------------
-  // Authentication — Data Source
-  // ---------------------------------------------------------------------------
+  // Auth Data
   getIt.registerLazySingleton<AuthRemoteDataSource>(
     () => AuthRemoteDataSourceImpl(getIt<DioClient>()),
   );
 
-  // ---------------------------------------------------------------------------
-  // Authentication — Repository
-  // ---------------------------------------------------------------------------
   getIt.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(
       getIt<AuthRemoteDataSource>(),
@@ -59,34 +49,42 @@ void setupInjection() {
     ),
   );
 
-  // ---------------------------------------------------------------------------
-  // Authentication — Use Cases
-  // ---------------------------------------------------------------------------
-  getIt.registerFactory<RegistrationUseCase>(
-    () => RegistrationUseCase(getIt<AuthRepository>()),
+  // Auth Use Cases
+  getIt.registerFactory<RegisterUseCase>(
+    () => RegisterUseCase(getIt<AuthRepository>()),
   );
-
   getIt.registerFactory<LoginUseCase>(
     () => LoginUseCase(getIt<AuthRepository>()),
   );
-
   getIt.registerFactory<ForgotPasswordUseCase>(
     () => ForgotPasswordUseCase(getIt<AuthRepository>()),
   );
-
   getIt.registerFactory<ResetPasswordUseCase>(
     () => ResetPasswordUseCase(getIt<AuthRepository>()),
   );
+  getIt.registerFactory<VerifyEmailUseCase>(
+    () => VerifyEmailUseCase(getIt<AuthRepository>()),
+  );
+  getIt.registerFactory<CheckSessionUseCase>(
+    () => CheckSessionUseCase(getIt<AuthRepository>()),
+  );
+  getIt.registerFactory<SignOutUseCase>(
+    () => SignOutUseCase(getIt<AuthRepository>()),
+  );
 
-  // ---------------------------------------------------------------------------
-  // Authentication — Cubit
-  // ---------------------------------------------------------------------------
-  getIt.registerFactory<AuthCubit>(
-    () => AuthCubit(
-      getIt<RegistrationUseCase>(),
+  // Auth Cubits
+  getIt.registerLazySingleton<AuthSessionCubit>(
+    () =>
+        AuthSessionCubit(getIt<CheckSessionUseCase>(), getIt<SignOutUseCase>()),
+  );
+
+  getIt.registerFactory<AuthFormCubit>(
+    () => AuthFormCubit(
+      getIt<RegisterUseCase>(),
       getIt<LoginUseCase>(),
       getIt<ForgotPasswordUseCase>(),
       getIt<ResetPasswordUseCase>(),
+      getIt<VerifyEmailUseCase>(),
     ),
   );
 }

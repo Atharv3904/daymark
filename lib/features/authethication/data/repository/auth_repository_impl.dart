@@ -1,20 +1,11 @@
-// lib/features/authethication/data/repository/auth_repository_impl.dart
-//
-// Concrete implementation of the unified authentication repository.
-// Uses [AuthRemoteDataSource] for all REST API operations and maps
-// [AppException] types to domain-level [AppFailure] types.
-//
-// Error mapping follows CUSTOM_EXCEPTIONS_SPEC.md and BOUNDARY_CONDITIONS_SPEC.md.
-
 import 'package:dartz/dartz.dart';
+
 import 'package:daymark_tracking/core/errors/exceptions/app_exception.dart';
 import 'package:daymark_tracking/core/errors/failures/app_failure.dart';
 import 'package:daymark_tracking/core/storage/token_storage.dart';
 import 'package:daymark_tracking/features/authethication/data/datasource/auth_remote_datasource.dart';
-import 'package:daymark_tracking/features/authethication/domain/entity/forgot_password_entity.dart';
-import 'package:daymark_tracking/features/authethication/domain/entity/login_entity.dart';
-import 'package:daymark_tracking/features/authethication/domain/entity/registration_entity.dart';
-import 'package:daymark_tracking/features/authethication/domain/entity/reset_password_entity.dart';
+import 'package:daymark_tracking/features/authethication/data/model/auth_models.dart';
+import 'package:daymark_tracking/features/authethication/domain/entity/auth_entities.dart';
 import 'package:daymark_tracking/features/authethication/domain/repository/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
@@ -23,179 +14,172 @@ class AuthRepositoryImpl implements AuthRepository {
 
   AuthRepositoryImpl(this._dataSource, this._tokenStorage);
 
-  // ---------------------------------------------------------------------------
-  // Registration
-  // ---------------------------------------------------------------------------
+  @override
+  Future<Either<AppFailure, AuthSessionEntity>> register(
+    RegistrationEntity entity,
+  ) async {
+    try {
+      final AuthSessionModel result = await _dataSource.register(
+        RegistrationRequestModel.fromEntity(entity),
+      );
+      await _persistTokensIfPresent(result);
+      // TODO: Trigger Profile initialization per `profile/spec.md` once
+      // backend registration/profile boundary is confirmed.
+      return Right(result.toEntity());
+    } on AppException catch (e) {
+      return Left(_mapExceptionToFailure(e));
+    } catch (_) {
+      return const Left(UnknownAuthFailure());
+    }
+  }
 
   @override
-  Future<Either<AppFailure, void>> register(RegistrationEntity entity) async {
+  Future<Either<AppFailure, AuthSessionEntity>> login(
+    LoginEntity entity,
+  ) async {
     try {
-      await _dataSource.register(
-        email: entity.email,
-        password: entity.password,
+      final AuthSessionModel result = await _dataSource.login(
+        LoginRequestModel.fromEntity(entity),
       );
-
-      // TODO: When backend contract is confirmed, check response for
-      // email-verification status. If verification is required, return
-      // Left(EmailVerificationPendingFailure()) instead.
-      return const Right(null);
+      await _persistTokensIfPresent(result);
+      return Right(result.toEntity());
     } on AppException catch (e) {
-      return Left(_mapRegistrationException(e));
+      return Left(_mapExceptionToFailure(e));
     } catch (_) {
-      return const Left(NetworkFailure());
+      return const Left(UnknownAuthFailure());
     }
   }
-
-  AppFailure _mapRegistrationException(AppException e) {
-    if (e is ConflictException) {
-      return const UserAlreadyExistsFailure();
-    }
-    if (e is ValidationException) {
-      final String msg = e.message.toLowerCase();
-      if (msg.contains('weak password')) {
-        return const WeakPasswordFailure();
-      }
-      return UnknownAuthFailure(message: e.message);
-    }
-    if (e is RateLimitException) {
-      return RateLimitFailure(message: e.message);
-    }
-    if (e is NetworkException) {
-      return const NetworkFailure();
-    }
-    return UnknownAuthFailure(message: e.message);
-  }
-
-  // ---------------------------------------------------------------------------
-  // Login
-  // ---------------------------------------------------------------------------
-
-  @override
-  Future<Either<AppFailure, void>> login(LoginEntity entity) async {
-    try {
-      final Map<String, dynamic> response = await _dataSource.login(
-        email: entity.email,
-        password: entity.password,
-      );
-
-      // Persist tokens returned by the backend.
-      // TODO: Confirm token field names with backend contract.
-      final String? accessToken = response['access_token'] as String?;
-      final String? refreshToken = response['refresh_token'] as String?;
-
-      if (accessToken != null && accessToken.isNotEmpty) {
-        await _tokenStorage.saveTokens(
-          accessToken: accessToken,
-          refreshToken: refreshToken,
-        );
-      }
-
-      return const Right(null);
-    } on AppException catch (e) {
-      return Left(_mapLoginException(e));
-    } catch (_) {
-      return const Left(NetworkFailure());
-    }
-  }
-
-  AppFailure _mapLoginException(AppException e) {
-    if (e is UnauthorizedException) {
-      return const InvalidCredentialsFailure();
-    }
-    if (e is ValidationException) {
-      final String msg = e.message.toLowerCase();
-      if (msg.contains('email not confirmed') || msg.contains('not verified')) {
-        return const EmailNotVerifiedFailure();
-      }
-      return UnknownAuthFailure(message: e.message);
-    }
-    if (e is RateLimitException) {
-      return RateLimitFailure(message: e.message);
-    }
-    if (e is NetworkException) {
-      return const NetworkFailure();
-    }
-    return UnknownAuthFailure(message: e.message);
-  }
-
-  // ---------------------------------------------------------------------------
-  // Forgot Password
-  // ---------------------------------------------------------------------------
 
   @override
   Future<Either<AppFailure, void>> sendPasswordResetEmail(
     ForgotPasswordEntity entity,
   ) async {
     try {
-      await _dataSource.sendPasswordResetEmail(email: entity.email);
-
-      // Per spec: Always return success for neutral confirmation
-      // (prevent account enumeration).
+      await _dataSource.sendPasswordResetEmail(
+        ForgotPasswordRequestModel.fromEntity(entity),
+      );
       return const Right(null);
     } on AppException catch (e) {
-      return Left(_mapForgotPasswordException(e));
+      return Left(_mapExceptionToFailure(e));
     } catch (_) {
-      return const Left(NetworkFailure());
+      return const Left(UnknownAuthFailure());
     }
   }
-
-  AppFailure _mapForgotPasswordException(AppException e) {
-    if (e is RateLimitException) {
-      return const RateLimitFailure(
-        message:
-            'Too many requests. Please wait a few moments before trying again.',
-      );
-    }
-    if (e is NetworkException) {
-      return const NetworkFailure();
-    }
-    return UnknownAuthFailure(message: e.message);
-  }
-
-  // ---------------------------------------------------------------------------
-  // Password Reset
-  // ---------------------------------------------------------------------------
 
   @override
   Future<Either<AppFailure, void>> resetPassword(
     ResetPasswordEntity entity,
   ) async {
     try {
-      // TODO: The reset token should be obtained from the deep-link URL
-      // parameter and passed through the domain layer. Currently the domain
-      // entity only carries `newPassword`. When the backend contract is
-      // confirmed, either:
-      //   1. Add a `token` field to ResetPasswordEntity, or
-      //   2. Pass the token through a different mechanism.
       await _dataSource.resetPassword(
-        newPassword: entity.newPassword,
-        token: '', // Placeholder — requires backend contract confirmation
+        ResetPasswordRequestModel.fromEntity(entity),
       );
       return const Right(null);
     } on AppException catch (e) {
-      return Left(_mapResetPasswordException(e));
+      if (e is AppInvalidCredentialsException ||
+          e is UnauthorizedException ||
+          e is ForbiddenException) {
+        return const Left(InvalidResetLinkFailure());
+      }
+      return Left(_mapExceptionToFailure(e));
     } catch (_) {
-      return const Left(NetworkFailure());
+      return const Left(UnknownAuthFailure());
     }
   }
 
-  AppFailure _mapResetPasswordException(AppException e) {
-    if (e is ValidationException) {
-      final String msg = e.message.toLowerCase();
-      if (msg.contains('weak password')) {
-        return const WeakPasswordFailure();
+  @override
+  Future<Either<AppFailure, AuthSessionEntity>> verifyEmail(
+    VerifyEmailEntity entity,
+  ) async {
+    try {
+      final AuthSessionModel result = await _dataSource.verifyEmail(
+        VerifyEmailRequestModel.fromEntity(entity),
+      );
+      await _persistTokensIfPresent(result);
+      return Right(result.toEntity());
+    } on AppException catch (e) {
+      return Left(_mapExceptionToFailure(e));
+    } catch (_) {
+      return const Left(UnknownAuthFailure());
+    }
+  }
+
+  @override
+  Future<Either<AppFailure, AuthSessionEntity>> checkSession() async {
+    try {
+      final String? token = await _tokenStorage.getAccessToken();
+      if (token == null || token.isEmpty) {
+        return const Right(
+          AuthSessionEntity(isAuthenticated: false, isEmailVerified: false),
+        );
       }
-      return UnknownAuthFailure(message: e.message);
+      // TODO: Validate stored session against FastAPI `/me` or `/refresh`
+      // endpoint once backend session contract is confirmed.
+      return const Right(
+        AuthSessionEntity(isAuthenticated: true, isEmailVerified: true),
+      );
+    } catch (_) {
+      return const Left(UnknownAuthFailure());
     }
-    if (e is UnauthorizedException || e is ForbiddenException) {
-      return InvalidResetLinkFailure(message: e.message);
+  }
+
+  @override
+  Future<Either<AppFailure, void>> signOut({bool global = false}) async {
+    try {
+      if (global) {
+        await _dataSource.signOut(global: true);
+      }
+      await _tokenStorage.clearTokens();
+      return const Right(null);
+    } on AppException catch (e) {
+      await _tokenStorage.clearTokens();
+      return Left(_mapExceptionToFailure(e));
+    } catch (_) {
+      return const Left(UnknownAuthFailure());
     }
-    if (e is RateLimitException) {
-      return RateLimitFailure(message: e.message);
+  }
+
+  Future<void> _persistTokensIfPresent(AuthSessionModel model) async {
+    final String? token = model.accessToken;
+    if (token != null && token.isNotEmpty) {
+      await _tokenStorage.saveTokens(
+        accessToken: token,
+        refreshToken: model.refreshToken,
+      );
     }
-    if (e is NetworkException) {
+  }
+
+  AppFailure _mapExceptionToFailure(AppException e) {
+    if (e is AppUserAlreadyExistsException) {
+      return UserAlreadyExistsFailure(e.message);
+    }
+    if (e is AppWeakPasswordException) {
+      return WeakPasswordFailure(e.message);
+    }
+    if (e is AppInvalidCredentialsException) {
+      return InvalidCredentialsFailure(e.message);
+    }
+    if (e is AppEmailNotVerifiedException) {
+      return EmailNotVerifiedFailure(e.message);
+    }
+    if (e is AppEmailVerificationPendingException) {
+      return EmailVerificationPendingFailure(e.message);
+    }
+    if (e is AppSessionExpiredException) {
+      return SessionExpiredFailure(e.message);
+    }
+    if (e is AppRefreshTokenRevokedException) {
+      return RefreshTokenRevokedFailure(e.message);
+    }
+    if (e is AppNetworkException || e is NetworkException) {
       return const NetworkFailure();
     }
-    return UnknownAuthFailure(message: e.message);
+    if (e is RateLimitException) {
+      return const RateLimitFailure();
+    }
+    if (e is ServerException) {
+      return const ServerFailure();
+    }
+    return const UnknownAuthFailure();
   }
 }

@@ -1,7 +1,4 @@
-/// Application-wide data layer exception hierarchy.
-///
-/// Thrown exclusively by Remote Data Sources and HTTP clients.
-/// Caught and mapped to [AppFailure] by Repository implementations.
+/// Application-wide data-layer exception hierarchy.
 abstract class AppException implements Exception {
   final String message;
   final int? statusCode;
@@ -12,13 +9,13 @@ abstract class AppException implements Exception {
   String toString() => '$runtimeType: $message (statusCode: $statusCode)';
 }
 
-/// Thrown when connection fails, times out, or host is unreachable.
 class NetworkException extends AppException {
-  const NetworkException([super.message = 'Network connection failed', int? statusCode])
-      : super(statusCode: statusCode);
+  const NetworkException([
+    super.message = 'Network connection failed',
+    int? statusCode,
+  ]) : super(statusCode: statusCode);
 }
 
-/// Thrown when the server returns 400 Bad Request or 422 Unprocessable Entity.
 class ValidationException extends AppException {
   final dynamic errorDetails;
 
@@ -29,44 +26,109 @@ class ValidationException extends AppException {
   ]) : super(statusCode: statusCode);
 }
 
-/// Thrown when the server returns 401 Unauthorized.
 class UnauthorizedException extends AppException {
-  const UnauthorizedException([super.message = 'Unauthorized', int? statusCode = 401])
-      : super(statusCode: statusCode);
+  const UnauthorizedException([
+    super.message = 'Unauthorized',
+    int? statusCode = 401,
+  ]) : super(statusCode: statusCode);
 }
 
-/// Thrown when the server returns 403 Forbidden.
 class ForbiddenException extends AppException {
   const ForbiddenException([super.message = 'Forbidden', int? statusCode = 403])
-      : super(statusCode: statusCode);
+    : super(statusCode: statusCode);
 }
 
-/// Thrown when the server returns 404 Not Found.
 class NotFoundException extends AppException {
-  const NotFoundException([super.message = 'Resource not found', int? statusCode = 404])
-      : super(statusCode: statusCode);
+  const NotFoundException([
+    super.message = 'Resource not found',
+    int? statusCode = 404,
+  ]) : super(statusCode: statusCode);
 }
 
-/// Thrown when the server returns 409 Conflict.
 class ConflictException extends AppException {
-  const ConflictException([super.message = 'Conflict occurred', int? statusCode = 409])
-      : super(statusCode: statusCode);
+  const ConflictException([
+    super.message = 'Conflict occurred',
+    int? statusCode = 409,
+  ]) : super(statusCode: statusCode);
 }
 
-/// Thrown when the server returns 429 Too Many Requests.
 class RateLimitException extends AppException {
-  const RateLimitException([super.message = 'Rate limit exceeded', int? statusCode = 429])
-      : super(statusCode: statusCode);
+  const RateLimitException([
+    super.message = 'Rate limit exceeded',
+    int? statusCode = 429,
+  ]) : super(statusCode: statusCode);
 }
 
-/// Thrown when the server returns a 5xx Internal Server Error.
 class ServerException extends AppException {
-  const ServerException([super.message = 'Internal server error', int? statusCode = 500])
-      : super(statusCode: statusCode);
+  const ServerException([
+    super.message = 'Internal server error',
+    int? statusCode = 500,
+  ]) : super(statusCode: statusCode);
 }
 
-/// Thrown when response parsing or JSON deserialization fails.
 class ParsingException extends AppException {
-  const ParsingException([super.message = 'Failed to parse response payload', int? statusCode])
-      : super(statusCode: statusCode);
+  const ParsingException([
+    super.message = 'Failed to parse response payload',
+    int? statusCode,
+  ]) : super(statusCode: statusCode);
+}
+
+/// Base class for all authentication-specific exceptions per Spec Section 6.
+abstract class AppAuthException extends AppException {
+  const AppAuthException(super.message, {super.statusCode});
+}
+
+class AppInvalidCredentialsException extends AppAuthException {
+  const AppInvalidCredentialsException([
+    super.message = 'Invalid email or password.',
+  ]) : super(statusCode: 401);
+}
+
+class AppUserAlreadyExistsException extends AppAuthException {
+  const AppUserAlreadyExistsException([
+    super.message = 'An account with this email already exists.',
+  ]) : super(statusCode: 409);
+}
+
+class AppWeakPasswordException extends AppAuthException {
+  const AppWeakPasswordException([
+    super.message = 'Password does not meet security requirements.',
+  ]) : super(statusCode: 422);
+}
+
+class AppEmailNotVerifiedException extends AppAuthException {
+  const AppEmailNotVerifiedException([
+    super.message = 'Please verify your email before signing in.',
+  ]) : super(statusCode: 403);
+}
+
+class AppEmailVerificationPendingException extends AppAuthException {
+  const AppEmailVerificationPendingException([
+    super.message = 'Email verification is pending.',
+  ]);
+}
+
+class AppNetworkException extends AppAuthException {
+  const AppNetworkException([
+    super.message = 'Unable to reach the server. Please try again.',
+  ]);
+}
+
+class AppSessionExpiredException extends AppAuthException {
+  const AppSessionExpiredException([
+    super.message = 'Your session has expired. Please sign in again.',
+  ]) : super(statusCode: 401);
+}
+
+class AppRefreshTokenRevokedException extends AppAuthException {
+  const AppRefreshTokenRevokedException([
+    super.message = 'Session has been revoked. Please sign in again.',
+  ]) : super(statusCode: 401);
+}
+
+class AppUnknownAuthException extends AppAuthException {
+  const AppUnknownAuthException([
+    super.message = 'An unexpected authentication error occurred.',
+    int? statusCode,
+  ]) : super(statusCode: statusCode);
 }

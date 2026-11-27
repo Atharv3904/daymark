@@ -1,10 +1,11 @@
 import 'package:dio/dio.dart';
+
 import 'package:daymark_tracking/core/storage/token_storage.dart';
 
 /// Contract-ready authentication interceptor for Dio.
 ///
-/// Attaches stored credentials when active, and protects against logging
-/// sensitive authentication headers or payload data.
+/// Kept dormant (`attachToken: false`) until the FastAPI authentication
+/// header/token contract is confirmed. Never logs tokens or payloads.
 class AuthInterceptor extends QueuedInterceptor {
   final TokenStorage _tokenStorage;
   final bool attachToken;
@@ -17,17 +18,17 @@ class AuthInterceptor extends QueuedInterceptor {
     RequestInterceptorHandler handler,
   ) async {
     if (attachToken) {
-      final token = await _tokenStorage.getAccessToken();
+      final String? token = await _tokenStorage.getAccessToken();
       if (token != null && token.isNotEmpty) {
         options.headers['Authorization'] = 'Bearer $token';
       }
     }
-    return handler.next(options);
+    handler.next(options);
   }
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    // Interceptor hook for 401 Unauthorized handling when refresh contract is approved.
-    return handler.next(err);
+    // TODO: Wire 401 refresh/revocation handling once backend refresh contract is confirmed.
+    handler.next(err);
   }
 }

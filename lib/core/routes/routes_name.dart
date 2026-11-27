@@ -1,11 +1,15 @@
-// lib/core/routes/routes_name.dart
-//
-// Centralised route name constants. Using a single source of truth
-// prevents typos and makes refactoring easier.
+/// Centralized route names for GoRouter named navigation.
+class RouteNames {
+  RouteNames._();
 
-class Routes {
-  static const String signup = '/signup';
-  static const String login = '/login';
-  static const String forgotPassword = '/forgot-password';
-  static const String resetPassword = '/reset-password';
+  static const String splash = 'splash';
+  static const String welcome = 'welcome';
+  static const String login = 'login';
+  static const String signup = 'signup';
+  static const String forgotPassword = 'forgotPassword';
+  static const String resetPassword = 'resetPassword';
+  static const String verifyEmail = 'verifyEmail';
+  static const String verificationPending = 'verificationPending';
+  static const String home = 'home';
+  static const String settings = 'settings';
 }

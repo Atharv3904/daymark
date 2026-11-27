@@ -1,9 +1,9 @@
 import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart';
 
-/// Centralized API and environment configuration.
-///
-/// Uses `--dart-define` for runtime configuration with safe environment-aware defaults.
+/// Centralized API configuration loaded from `--dart-define` flags
+/// with platform-aware local development defaults.
 class ApiConfig {
   final String baseUrl;
   final int connectTimeoutMs;
@@ -17,12 +17,6 @@ class ApiConfig {
     this.sendTimeoutMs = 15000,
   });
 
-  /// Factory that loads configuration from compile-time `--dart-define` environment flags.
-  ///
-  /// If `API_BASE_URL` is omitted, resolves local development host appropriately:
-  /// - Android emulator: `http://10.0.2.2:8000`
-  /// - iOS Simulator / macOS / Desktop: `http://localhost:8000`
-  /// - Web: `http://localhost:8000`
   factory ApiConfig.fromEnvironment() {
     const String envBaseUrl = String.fromEnvironment('API_BASE_URL');
     const int envConnectTimeout = int.fromEnvironment(
@@ -40,11 +34,9 @@ class ApiConfig {
 
     String resolvedBaseUrl = envBaseUrl.trim();
     if (resolvedBaseUrl.isEmpty) {
-      if (!kIsWeb && Platform.isAndroid) {
-        resolvedBaseUrl = 'http://10.0.2.2:8000';
-      } else {
-        resolvedBaseUrl = 'http://localhost:8000';
-      }
+      resolvedBaseUrl = (!kIsWeb && Platform.isAndroid)
+          ? 'http://10.0.2.2:8000'
+          : 'http://localhost:8000';
     }
 
     return ApiConfig(

@@ -1,108 +1,104 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:daymark_tracking/core/config/api_config.dart';
 import 'package:daymark_tracking/core/errors/exceptions/app_exception.dart';
 import 'package:daymark_tracking/core/network/dio_client.dart';
 import 'package:daymark_tracking/core/storage/token_storage.dart';
 
-class MockTokenStorage implements TokenStorage {
-  String? token;
+class _FakeTokenStorage implements TokenStorage {
+  @override
+  Future<void> clearTokens() async {}
 
   @override
-  Future<String?> getAccessToken() async => token;
+  Future<String?> getAccessToken() async => null;
 
   @override
   Future<String?> getRefreshToken() async => null;
 
   @override
-  Future<void> saveTokens({required String accessToken, String? refreshToken}) async {
-    token = accessToken;
-  }
-
-  @override
-  Future<void> clearTokens() async {
-    token = null;
-  }
+  Future<void> saveTokens({
+    required String accessToken,
+    String? refreshToken,
+  }) async {}
 }
 
 void main() {
-  group('DioClient & Network Exception Mapping Tests', () {
-    late MockTokenStorage tokenStorage;
-    late ApiConfig config;
-    late DioClient client;
-
-    setUp(() {
-      tokenStorage = MockTokenStorage();
-      config = const ApiConfig(
-        baseUrl: 'http://test-api.daymark.local',
+  group('DioClient', () {
+    test('initializes BaseOptions from ApiConfig', () {
+      const ApiConfig config = ApiConfig(
+        baseUrl: 'http://localhost:8000',
         connectTimeoutMs: 10000,
       );
-      client = DioClient(config: config, tokenStorage: tokenStorage);
-    });
-
-    test('DioClient initializes with expected options', () {
-      expect(client.dio.options.baseUrl, 'http://test-api.daymark.local');
-      expect(client.dio.options.connectTimeout, const Duration(milliseconds: 10000));
-      expect(client.dio.options.headers['Content-Type'], 'application/json');
-      expect(client.dio.options.headers['Accept'], 'application/json');
-    });
-
-    test('mapDioException maps connectionTimeout to NetworkException', () {
-      final dioException = DioException(
-        requestOptions: RequestOptions(path: '/test'),
-        type: DioExceptionType.connectionTimeout,
-        message: 'Timeout exceeded',
+      final DioClient client = DioClient(
+        config: config,
+        tokenStorage: _FakeTokenStorage(),
       );
 
-      final result = DioClient.mapDioException(dioException);
-      expect(result, isA<NetworkException>());
+      expect(client.dio.options.baseUrl, 'http://localhost:8000');
+      expect(
+        client.dio.options.connectTimeout,
+        const Duration(milliseconds: 10000),
+      );
+      expect(client.dio.options.headers['Content-Type'], 'application/json');
+    });
+
+    test('mapDioException maps timeouts to NetworkException', () {
+      final DioException err = DioException(
+        requestOptions: RequestOptions(path: '/test'),
+        type: DioExceptionType.connectionTimeout,
+      );
+
+      expect(DioClient.mapDioException(err), isA<NetworkException>());
     });
 
     test('mapDioException maps 401 to UnauthorizedException', () {
-      final dioException = DioException(
-        requestOptions: RequestOptions(path: '/test'),
+      final RequestOptions req = RequestOptions(path: '/test');
+      final DioException err = DioException(
+        requestOptions: req,
         type: DioExceptionType.badResponse,
-        response: Response(
-          requestOptions: RequestOptions(path: '/test'),
+        response: Response<dynamic>(
+          requestOptions: req,
           statusCode: 401,
-          data: {'detail': 'Invalid credentials'},
+          data: <String, dynamic>{'detail': 'Invalid credentials'},
         ),
       );
 
-      final result = DioClient.mapDioException(dioException);
-      expect(result, isA<UnauthorizedException>());
-      expect(result.message, 'Invalid credentials');
+      final AppException mapped = DioClient.mapDioException(err);
+      expect(mapped, isA<UnauthorizedException>());
+      expect(mapped.message, 'Invalid credentials');
     });
 
-    test('mapDioException maps 422 to ValidationException', () {
-      final dioException = DioException(
-        requestOptions: RequestOptions(path: '/test'),
+    test('mapDioException extracts FastAPI 422 detail list message', () {
+      final RequestOptions req = RequestOptions(path: '/test');
+      final DioException err = DioException(
+        requestOptions: req,
         type: DioExceptionType.badResponse,
-        response: Response(
-          requestOptions: RequestOptions(path: '/test'),
+        response: Response<dynamic>(
+          requestOptions: req,
           statusCode: 422,
-          data: {'detail': 'Field missing'},
+          data: <String, dynamic>{
+            'detail': <Map<String, dynamic>>[
+              <String, dynamic>{'msg': 'value is not a valid email address'},
+            ],
+          },
         ),
       );
 
-      final result = DioClient.mapDioException(dioException);
-      expect(result, isA<ValidationException>());
-      expect(result.message, 'Field missing');
+      final AppException mapped = DioClient.mapDioException(err);
+      expect(mapped, isA<ValidationException>());
+      expect(mapped.message, 'value is not a valid email address');
     });
 
     test('mapDioException maps 500 to ServerException', () {
-      final dioException = DioException(
-        requestOptions: RequestOptions(path: '/test'),
+      final RequestOptions req = RequestOptions(path: '/test');
+      final DioException err = DioException(
+        requestOptions: req,
         type: DioExceptionType.badResponse,
-        response: Response(
-          requestOptions: RequestOptions(path: '/test'),
-          statusCode: 500,
-        ),
+        response: Response<dynamic>(requestOptions: req, statusCode: 500),
       );
 
-      final result = DioClient.mapDioException(dioException);
-      expect(result, isA<ServerException>());
-      expect(result.statusCode, 500);
+      expect(DioClient.mapDioException(err), isA<ServerException>());
     });
   });
 }

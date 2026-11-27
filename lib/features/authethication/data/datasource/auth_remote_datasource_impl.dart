@@ -1,97 +1,133 @@
-// lib/features/authethication/data/datasource/auth_remote_datasource_impl.dart
-//
-// Concrete implementation of the unified authentication remote data source.
-// All FastAPI REST API calls for authentication are centralised here.
-
 import 'package:dio/dio.dart';
+
+import 'package:daymark_tracking/core/errors/exceptions/app_exception.dart';
 import 'package:daymark_tracking/core/network/dio_client.dart';
+import 'package:daymark_tracking/features/authethication/data/datasource/auth_remote_datasource.dart';
+import 'package:daymark_tracking/features/authethication/data/model/auth_models.dart';
 
-import 'auth_remote_datasource.dart';
-
-/// REST implementation of [AuthRemoteDataSource].
+/// Contract-ready REST implementation of [AuthRemoteDataSource].
 ///
-/// Communicates with the FastAPI backend via [DioClient].
-/// [DioException] errors are mapped to typed [AppException] by
-/// [DioClient.mapDioException] and rethrown for the repository to handle.
+/// Communicates with FastAPI exclusively via [DioClient] and maps errors
+/// to [AppAuthException] subtypes per `authethications/spec.md` Section 6.
 ///
-/// TODO: Update endpoint paths when FastAPI API documentation is available.
+/// TODO: Confirm all endpoint paths, payloads, and error codes against the
+/// implemented FastAPI OpenAPI specification before production integration.
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final DioClient _client;
 
   AuthRemoteDataSourceImpl(this._client);
 
-  // TODO: Confirm endpoint paths with FastAPI backend documentation.
+  // TODO: Replace placeholder paths when FastAPI auth routes are finalized.
   static const String _registerPath = '/api/v1/auth/register';
   static const String _loginPath = '/api/v1/auth/login';
   static const String _forgotPasswordPath = '/api/v1/auth/forgot-password';
   static const String _resetPasswordPath = '/api/v1/auth/reset-password';
-  static const String _signOutPath = '/api/v1/auth/sign-out';
+  static const String _verifyEmailPath = '/api/v1/auth/verify-email';
+  static const String _signOutPath = '/api/v1/auth/logout';
 
   @override
-  Future<Map<String, dynamic>> register({
-    required String email,
-    required String password,
-  }) async {
+  Future<AuthSessionModel> register(RegistrationRequestModel model) async {
     try {
       final Response<dynamic> response = await _client.dio.post(
         _registerPath,
-        data: <String, dynamic>{'email': email, 'password': password},
+        data: model.toJson(),
       );
-      return response.data as Map<String, dynamic>;
+      return _parseSession(response.data);
     } on DioException catch (e) {
-      throw DioClient.mapDioException(e);
+      throw _mapToAuthException(DioClient.mapDioException(e));
     }
   }
 
   @override
-  Future<Map<String, dynamic>> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<AuthSessionModel> login(LoginRequestModel model) async {
     try {
       final Response<dynamic> response = await _client.dio.post(
         _loginPath,
-        data: <String, dynamic>{'email': email, 'password': password},
+        data: model.toJson(),
       );
-      return response.data as Map<String, dynamic>;
+      return _parseSession(response.data);
     } on DioException catch (e) {
-      throw DioClient.mapDioException(e);
+      throw _mapToAuthException(DioClient.mapDioException(e));
     }
   }
 
   @override
-  Future<void> sendPasswordResetEmail({required String email}) async {
+  Future<void> sendPasswordResetEmail(ForgotPasswordRequestModel model) async {
+    try {
+      await _client.dio.post(_forgotPasswordPath, data: model.toJson());
+    } on DioException catch (e) {
+      throw _mapToAuthException(DioClient.mapDioException(e));
+    }
+  }
+
+  @override
+  Future<void> resetPassword(ResetPasswordRequestModel model) async {
+    try {
+      await _client.dio.post(_resetPasswordPath, data: model.toJson());
+    } on DioException catch (e) {
+      throw _mapToAuthException(DioClient.mapDioException(e));
+    }
+  }
+
+  @override
+  Future<AuthSessionModel> verifyEmail(VerifyEmailRequestModel model) async {
+    try {
+      final Response<dynamic> response = await _client.dio.post(
+        _verifyEmailPath,
+        data: model.toJson(),
+      );
+      return _parseSession(response.data);
+    } on DioException catch (e) {
+      throw _mapToAuthException(DioClient.mapDioException(e));
+    }
+  }
+
+  @override
+  Future<void> signOut({bool global = false}) async {
     try {
       await _client.dio.post(
-        _forgotPasswordPath,
-        data: <String, dynamic>{'email': email},
+        _signOutPath,
+        data: <String, dynamic>{'global': global},
       );
     } on DioException catch (e) {
-      throw DioClient.mapDioException(e);
+      throw _mapToAuthException(DioClient.mapDioException(e));
     }
   }
 
-  @override
-  Future<void> resetPassword({
-    required String newPassword,
-    required String token,
-  }) async {
-    try {
-      await _client.dio.post(
-        _resetPasswordPath,
-        data: <String, dynamic>{'new_password': newPassword, 'token': token},
-      );
-    } on DioException catch (e) {
-      throw DioClient.mapDioException(e);
+  AuthSessionModel _parseSession(dynamic data) {
+    if (data is Map<String, dynamic>) {
+      return AuthSessionModel.fromJson(data);
     }
+    throw const AppUnknownAuthException('Unexpected authentication response.');
   }
 
-  @override
-  Future<void> signOut() async {
-    try {
-      await _client.dio.post(_signOutPath);
-    } on DioException catch (e) {
-      throw DioClient.mapDioException(e);
+  AppException _mapToAuthException(AppException error) {
+    if (error is NetworkException) {
+      return AppNetworkException(error.message);
     }
+    if (error is ConflictException) {
+      return AppUserAlreadyExistsException(error.message);
+    }
+    if (error is UnauthorizedException) {
+      return AppInvalidCredentialsException(error.message);
+    }
+    if (error is ForbiddenException) {
+      final String msg = error.message.toLowerCase();
+      if (msg.contains('verif')) {
+        return AppEmailNotVerifiedException(error.message);
+      }
+      return AppUnknownAuthException(error.message, error.statusCode);
+    }
+    if (error is ValidationException) {
+      final String msg = error.message.toLowerCase();
+      if (msg.contains('weak')) {
+        return AppWeakPasswordException(error.message);
+      }
+      return AppUnknownAuthException(error.message, error.statusCode);
+    }
+    if (error is RateLimitException) {
+      return error;
+    }
+    return AppUnknownAuthException(error.message, error.statusCode);
   }
 }
